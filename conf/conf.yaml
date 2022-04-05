@@ -1,0 +1,5 @@
+name: oort-server
+version: v1.0
+endpoint:
+  http:
+    url: :8080
