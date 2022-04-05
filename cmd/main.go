@@ -1,7 +1,15 @@
 package main
 
-import "fmt"
+import (
+	"github.com/ProjectOort/oort-server/api/handler/index"
+	"github.com/gofiber/fiber/v2"
+)
 
 func main() {
-	fmt.Println("Working")
+	app := fiber.New()
+
+	r := app.Group("/api")
+	index.MakeHandlers(r)
+
+	app.Listen(":8080")
 }
