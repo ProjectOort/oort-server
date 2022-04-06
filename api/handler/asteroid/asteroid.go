@@ -104,3 +104,26 @@ func (h *handler) list(c *fiber.Ctx) error {
 	}
 	return c.JSON(toJ)
 }
+
+func (h *handler) get(c *fiber.Ctx) error {
+	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+
+	var input struct {
+		ID string `json:"id"`
+	}
+	if err := c.QueryParser(&input); err != nil {
+		return err
+	}
+	log.Debugf("[H] parsed params, input = %+v", input)
+
+	astID, err := primitive.ObjectIDFromHex(input.ID)
+	if err != nil {
+		return err
+	}
+	ast, err := h.asteroidService.Get(c.Context(), astID)
+	if err != nil {
+		return err
+	}
+	toJ := MakeAsteroidPresenter(ast)
+	return c.JSON(toJ)
+}

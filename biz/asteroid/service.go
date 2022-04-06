@@ -90,3 +90,14 @@ func (s *Service) List(ctx context.Context) ([]*Asteroid, error) {
 	// TODO Add other type of asteroid query support
 	return s.repo.ListHub(ctx, auth.FromContext(ctx).ID)
 }
+
+func (s *Service) Get(ctx context.Context, astID primitive.ObjectID) (*Asteroid, error) {
+	ast, err := s.repo.Get(ctx, astID)
+	if err != nil {
+		return nil, err
+	}
+	if ast.AuthorID != auth.FromContext(ctx).ID {
+		return nil, errors.New("the target node not belong to you")
+	}
+	return ast, nil
+}
