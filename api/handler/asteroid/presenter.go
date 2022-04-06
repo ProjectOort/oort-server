@@ -25,3 +25,17 @@ func MakeAsteroidPresenter(ast *asteroid.Asteroid) *Asteroid {
 		UpdatedTime: ast.UpdatedTime,
 	}
 }
+
+type Item struct {
+	ID    string `json:"id"`
+	Hub   bool   `json:"hub"`
+	Title string `json:"title"`
+}
+
+func MakeItemPresenter(ast *asteroid.Asteroid) *Item {
+	return &Item{
+		ID:    ast.ID.Hex(),
+		Hub:   ast.Hub,
+		Title: ast.Title,
+	}
+}

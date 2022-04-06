@@ -14,6 +14,7 @@ func MakeHandlers(r fiber.Router, logger *zap.Logger, asteroidService *asteroid.
 
 	r.Post("/asteroid", h.create)
 	r.Put("/asteroid/content", h.sync)
+	r.Get("/asteroids", h.list)
 }
 
 type handler struct {
@@ -90,4 +91,16 @@ func (h *handler) sync(c *fiber.Ctx) error {
 	}
 
 	return h.asteroidService.Sync(c.Context(), &asteroid.Asteroid{ID: astID, Content: input.Content})
+}
+
+func (h *handler) list(c *fiber.Ctx) error {
+	asts, err := h.asteroidService.List(c.Context())
+	if err != nil {
+		return err
+	}
+	toJ := make([]*Item, 0, len(asts))
+	for _, ast := range asts {
+		toJ = append(toJ, MakeItemPresenter(ast))
+	}
+	return c.JSON(toJ)
 }

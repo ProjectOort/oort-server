@@ -85,3 +85,8 @@ func (s *Service) Sync(ctx context.Context, ast *Asteroid) error {
 	}
 	return s.repo.UpdateContent(ctx, ast)
 }
+
+func (s *Service) List(ctx context.Context) ([]*Asteroid, error) {
+	// TODO Add other type of asteroid query support
+	return s.repo.ListHub(ctx, auth.FromContext(ctx).ID)
+}
