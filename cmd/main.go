@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	account_handlers "github.com/ProjectOort/oort-server/api/handler/account"
-	asteroid_handlers "github.com/ProjectOort/oort-server/api/handler/asteroid"
-	graph_handlers "github.com/ProjectOort/oort-server/api/handler/graph"
-	search_handlers "github.com/ProjectOort/oort-server/api/handler/search"
+	accounthandlers "github.com/ProjectOort/oort-server/api/handler/account"
+	asteroidhandlers "github.com/ProjectOort/oort-server/api/handler/asteroid"
+	graphhandlers "github.com/ProjectOort/oort-server/api/handler/graph"
+	searchhandlers "github.com/ProjectOort/oort-server/api/handler/search"
 	"github.com/ProjectOort/oort-server/api/middleware/auth"
 	"github.com/ProjectOort/oort-server/api/middleware/requestid"
 	"github.com/ProjectOort/oort-server/biz/account"
@@ -110,12 +110,12 @@ func boostrap(app *fiber.App, logger *zap.Logger, cfg *conf.App) func() {
 
 	// routes
 	api := app.Group("/api/")
-	account_handlers.MakeHandlers(api, logger, accountService)
+	accounthandlers.MakeHandlers(api, logger, accountService)
 
 	api.Use(auth.New(logger, accountService))
-	asteroid_handlers.MakeHandlers(api, logger, asteroidService)
-	graph_handlers.MakeHandlers(api, logger, graphService)
-	search_handlers.MakeHandlers(api, logger, searchService)
+	asteroidhandlers.MakeHandlers(api, logger, asteroidService)
+	graphhandlers.MakeHandlers(api, logger, graphService)
+	searchhandlers.MakeHandlers(api, logger, searchService)
 
 	return func() {
 		printCloseStatus(logger, "Neo4j driver", neo4jDriver.Close())
