@@ -5,6 +5,8 @@ go 1.17
 require (
 	github.com/gofiber/fiber/v2 v2.31.0
 	github.com/golang-jwt/jwt/v4 v4.4.1
+	github.com/neo4j/neo4j-go-driver/v4 v4.4.1
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.1
 	go.mongodb.org/mongo-driver v1.8.4
@@ -23,7 +25,6 @@ require (
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.4.1 // indirect

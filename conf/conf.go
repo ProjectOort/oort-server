@@ -29,10 +29,18 @@ type Logger struct {
 
 type Repo struct {
 	Mongo Mongo `mapstructure:"mongo"`
+	Neo4j Neo4j `mapstructure:"neo4j"`
 }
 
 type Mongo struct {
 	URL string `mapstructure:"url"`
+}
+
+type Neo4j struct {
+	URL      string `mapstructure:"url"`
+	Realm    string `mapstructure:"realm"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
 }
 
 type Biz struct {

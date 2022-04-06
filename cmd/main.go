@@ -8,14 +8,17 @@ import (
 	"time"
 
 	account_handlers "github.com/ProjectOort/oort-server/api/handler/account"
+	asteroid_handlers "github.com/ProjectOort/oort-server/api/handler/asteroid"
 	"github.com/ProjectOort/oort-server/api/middleware/auth"
 	"github.com/ProjectOort/oort-server/api/middleware/requestid"
 	"github.com/ProjectOort/oort-server/biz/account"
+	"github.com/ProjectOort/oort-server/biz/asteroid"
 	"github.com/ProjectOort/oort-server/conf"
 	"github.com/ProjectOort/oort-server/repo"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -72,11 +75,19 @@ func boostrap(app *fiber.App, logger *zap.Logger, cfg *conf.App) func() {
 	mongoDatabase := mongoClient.Database("oort_server")
 	go testMongoConnection(logger, mongoClient)
 
+	neo4jDriver, err := neo4j.NewDriver(
+		cfg.Repo.Neo4j.URL,
+		neo4j.BasicAuth(cfg.Repo.Neo4j.Username, cfg.Repo.Neo4j.Password, cfg.Repo.Neo4j.Realm))
+	panicIfFailed(err)
+	go testNeo4jConnection(logger, neo4jDriver)
+
 	// repositories
 	accountRepo := repo.NewAccountRepo(mongoDatabase)
+	asteroidRepo := repo.NewAsteroidRepo(mongoDatabase, neo4jDriver)
 
 	// services
 	accountService := account.NewService(logger, &cfg.Biz.Account, accountRepo)
+	asteroidService := asteroid.NewService(logger, asteroidRepo)
 
 	app.Use(pprof.New())
 	app.Use(requestid.New())
@@ -87,8 +98,10 @@ func boostrap(app *fiber.App, logger *zap.Logger, cfg *conf.App) func() {
 	account_handlers.MakeHandlers(api, logger, accountService)
 
 	api.Use(auth.New(logger, accountService))
+	asteroid_handlers.MakeHandlers(api, logger, asteroidService)
 
 	return func() {
+		printCloseStatus(logger, "Neo4j driver", neo4jDriver.Close())
 		printCloseStatus(logger, "Mongo client", mongoClient.Disconnect(context.Background()))
 	}
 }
@@ -97,6 +110,12 @@ func testMongoConnection(log *zap.Logger, _mongo *mongo.Client) {
 	time.Sleep(time.Second)
 	err := _mongo.Ping(context.Background(), readpref.Primary())
 	printConnectStatus(log, "Mongo", err)
+}
+
+func testNeo4jConnection(log *zap.Logger, _neo4j neo4j.Driver) {
+	time.Sleep(time.Second)
+	err := _neo4j.VerifyConnectivity()
+	printConnectStatus(log, "Neo4j", err)
 }
 
 func panicIfFailed(err error) {
