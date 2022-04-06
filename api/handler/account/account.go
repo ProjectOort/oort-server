@@ -30,7 +30,7 @@ func (h *handler) login(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H-login] parsed params, input = %+v", input)
+	log.Debugf("[H] parsed params, input = %+v", input)
 
 	acc, err := h.accountService.Login(c.Context(), input.Identifier, input.Password)
 	if err != nil {
@@ -59,7 +59,7 @@ func (h *handler) register(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H-register] parsed params, input = %+v", input)
+	log.Debugf("[H] parsed params, input = %+v", input)
 
 	err := h.accountService.Register(c.Context(), &account.Account{
 		NickName:    input.NickName,
@@ -80,7 +80,7 @@ func (h *handler) oAuthGitee(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H-oAuthGitee] parsed params, input = %+v", input)
+	log.Debugf("[H] parsed params, input = %+v", input)
 
 	acc, err := h.accountService.OAuthGitee(c.Context(), input.Code)
 	if err != nil {

@@ -33,7 +33,7 @@ func (h *handler) create(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H(asteroid/create)] parsed params, input = %+v", input)
+	log.Debugf("[H] parsed params, input = %+v", input)
 
 	linkFromIDs := make([]primitive.ObjectID, 0, len(input.LinkFrom))
 	linkToIDs := make([]primitive.ObjectID, 0, len(input.LinkTo))
