@@ -13,6 +13,7 @@ func MakeHandlers(r fiber.Router, logger *zap.Logger, asteroidService *asteroid.
 	h := &handler{logger: logger, asteroidService: asteroidService}
 
 	r.Post("/asteroid", h.create)
+	r.Put("/asteroid/content", h.sync)
 }
 
 type handler struct {
@@ -69,4 +70,24 @@ func (h *handler) create(c *fiber.Ctx) error {
 
 	toJ := MakeAsteroidPresenter(ast)
 	return c.JSON(toJ)
+}
+
+func (h *handler) sync(c *fiber.Ctx) error {
+	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+
+	var input struct {
+		ID      string `json:"id"`
+		Content string `json:"content"`
+	}
+	if err := c.BodyParser(&input); err != nil {
+		return err
+	}
+	log.Debugf("[H] parsed params, input = %+v", input)
+
+	astID, err := primitive.ObjectIDFromHex(input.ID)
+	if err != nil {
+		return err
+	}
+
+	return h.asteroidService.Sync(c.Context(), &asteroid.Asteroid{ID: astID, Content: input.Content})
 }

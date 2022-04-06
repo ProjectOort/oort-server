@@ -73,3 +73,15 @@ func (s *Service) checkIfTargetAsteroidBelongToUser(ctx context.Context, accID p
 	}
 	return nil
 }
+
+func (s *Service) Sync(ctx context.Context, ast *Asteroid) error {
+	existedAsteroid, err := s.repo.Get(ctx, ast.ID)
+	if err != nil {
+		return err
+	}
+	accID := auth.FromContext(ctx).ID
+	if existedAsteroid.AuthorID != accID {
+		return errors.New("the target node not belong to you")
+	}
+	return s.repo.UpdateContent(ctx, ast)
+}
