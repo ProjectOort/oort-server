@@ -32,7 +32,7 @@ func NewService(logger *zap.Logger, repo Repo) *Service {
 	}
 }
 
-func (x *Service) Create(ctx context.Context, ast *Asteroid, linkFromIDs []primitive.ObjectID, linkToIDs []primitive.ObjectID) (*Asteroid, error) {
+func (s *Service) Create(ctx context.Context, ast *Asteroid, linkFromIDs []primitive.ObjectID, linkToIDs []primitive.ObjectID) (*Asteroid, error) {
 	accID := auth.FromContext(ctx).ID
 
 	ast.ID = primitive.NewObjectID()
@@ -40,11 +40,11 @@ func (x *Service) Create(ctx context.Context, ast *Asteroid, linkFromIDs []primi
 	ast.CreatedTime = time.Now()
 	ast.UpdatedTime = time.Now()
 
-	if err := x.checkIfTargetAsteroidBelongToUser(ctx, accID, mergeIDSlices(linkFromIDs, linkToIDs)...); err != nil {
+	if err := s.checkIfTargetAsteroidBelongToUser(ctx, accID, mergeIDSlices(linkFromIDs, linkToIDs)...); err != nil {
 		return nil, err
 	}
 
-	if err := x.repo.Create(ctx, ast, linkFromIDs, linkToIDs); err != nil {
+	if err := s.repo.Create(ctx, ast, linkFromIDs, linkToIDs); err != nil {
 		return nil, err
 	}
 	return ast, nil
