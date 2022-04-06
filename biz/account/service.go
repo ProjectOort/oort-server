@@ -111,6 +111,20 @@ func (s *Service) loginByMobile(ctx context.Context, mobile, passwd string) (*Ac
 	return account, nil
 }
 
+func (s *Service) Register(ctx context.Context, acc *Account) error {
+	if _, err := s.repo.GetByUserName(ctx, acc.UserName); !errors.Is(err, mongo.ErrNoDocuments) {
+		return errors.New("user_name already exist")
+	}
+	if err := acc.HashPasswd(); err != nil {
+		return errors.New("invaild password")
+	}
+	acc.ID = primitive.NewObjectID()
+	acc.CreatedTime = time.Now()
+	acc.UpdatedTime = time.Now()
+	acc.State = true
+	return s.repo.Create(ctx, acc)
+}
+
 func (s *Service) OAuthGitee(ctx context.Context, code string) (*Account, error) {
 	if code == "" {
 		return nil, errors.New("invalid code")

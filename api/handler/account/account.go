@@ -11,6 +11,7 @@ func MakeHandlers(r fiber.Router, logger *zap.Logger, accountService *account.Se
 	h := &handler{logger: logger, accountService: accountService}
 
 	r.Post("/account/login", h.login)
+	r.Post("/account/register", h.register)
 	r.Post("/account/oauth/gitee", h.oAuthGitee)
 }
 
@@ -43,6 +44,31 @@ func (h *handler) login(c *fiber.Ctx) error {
 
 	toJ := MakeAccountPresenter(acc, token)
 	return c.JSON(toJ)
+}
+
+func (h *handler) register(c *fiber.Ctx) error {
+	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+
+	var input struct {
+		AvatarURL   string `json:"avatar_url"`
+		UserName    string `json:"user_name"`
+		Password    string `json:"password"`
+		NickName    string `json:"nick_name"`
+		Description string `json:"description"`
+	}
+	if err := c.BodyParser(&input); err != nil {
+		return err
+	}
+	log.Debugf("[H-register] parsed params, input = %+v", input)
+
+	err := h.accountService.Register(c.Context(), &account.Account{
+		NickName:    input.NickName,
+		AvatarURL:   input.AvatarURL,
+		Description: input.Description,
+		UserName:    input.UserName,
+		Password:    input.Password,
+	})
+	return err
 }
 
 func (h *handler) oAuthGitee(c *fiber.Ctx) error {

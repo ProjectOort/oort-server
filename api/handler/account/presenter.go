@@ -9,15 +9,19 @@ import (
 type Account struct {
 	Token string `json:"token"`
 
-	ID          string     `json:"id"`
-	BindStatus  BindStatus `json:"bind_status"`
-	AvatarURL   string     `json:"avatar_url"`
-	NickName    string     `json:"nick_name"`
-	Description string     `json:"description"`
+	ID         string     `json:"id"`
+	BindStatus BindStatus `json:"bind_status"`
+	Info       Info       `json:"info"`
+}
 
+type Info struct {
 	UserName string `json:"user_name"`
 	Mobile   string `json:"mobile"`
 	Email    string `json:"email"`
+
+	AvatarURL   string `json:"avatar_url"`
+	NickName    string `json:"nick_name"`
+	Description string `json:"description"`
 
 	CreatedTime time.Time `json:"created_time"`
 	UpdatedTime time.Time `json:"updated_time"`
@@ -44,13 +48,15 @@ func MakeAccountPresenter(acc *account.Account, token string) *Account {
 			Gitee:  acc.BindStatus.Gitee,
 			GitHub: acc.BindStatus.GitHub,
 		},
-		AvatarURL:   acc.AvatarURL,
-		NickName:    acc.NickName,
-		Description: acc.Description,
-		UserName:    acc.UserName,
-		Mobile:      acc.Mobile,
-		Email:       acc.Email,
-		CreatedTime: acc.CreatedTime,
-		UpdatedTime: acc.UpdatedTime,
+		Info: Info{
+			AvatarURL:   acc.AvatarURL,
+			NickName:    acc.NickName,
+			Description: acc.Description,
+			UserName:    acc.UserName,
+			Mobile:      acc.Mobile,
+			Email:       acc.Email,
+			CreatedTime: acc.CreatedTime,
+			UpdatedTime: acc.UpdatedTime,
+		},
 	}
 }
