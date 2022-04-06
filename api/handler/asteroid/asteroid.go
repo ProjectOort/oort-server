@@ -15,6 +15,7 @@ func MakeHandlers(r fiber.Router, logger *zap.Logger, asteroidService *asteroid.
 	r.Post("/asteroid", h.create)
 	r.Put("/asteroid/content", h.sync)
 	r.Get("/asteroids", h.list)
+	r.Get("/asteroid", h.get)
 }
 
 type handler struct {
