@@ -16,6 +16,8 @@ func MakeHandlers(r fiber.Router, logger *zap.Logger, asteroidService *asteroid.
 	r.Put("/asteroid/content", h.sync)
 	r.Get("/asteroids", h.list)
 	r.Get("/asteroid", h.get)
+	r.Get("/linked/from/asteroid", h.listLinkedFrom)
+	r.Get("/linked/to/asteroid", h.listLinkedTo)
 }
 
 type handler struct {
@@ -126,5 +128,57 @@ func (h *handler) get(c *fiber.Ctx) error {
 		return err
 	}
 	toJ := MakeAsteroidPresenter(ast)
+	return c.JSON(toJ)
+}
+
+func (h *handler) listLinkedFrom(c *fiber.Ctx) error {
+	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+
+	var input struct {
+		ID string `json:"id"`
+	}
+	if err := c.QueryParser(&input); err != nil {
+		return err
+	}
+	log.Debugf("[H] parsed params, input = %+v", input)
+
+	astID, err := primitive.ObjectIDFromHex(input.ID)
+	if err != nil {
+		return err
+	}
+	asts, err := h.asteroidService.ListLinkedFrom(c.Context(), astID)
+	if err != nil {
+		return err
+	}
+	toJ := make([]*Item, 0, len(asts))
+	for _, ast := range asts {
+		toJ = append(toJ, MakeItemPresenter(ast))
+	}
+	return c.JSON(toJ)
+}
+
+func (h *handler) listLinkedTo(c *fiber.Ctx) error {
+	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+
+	var input struct {
+		ID string `json:"id"`
+	}
+	if err := c.QueryParser(&input); err != nil {
+		return err
+	}
+	log.Debugf("[H] parsed params, input = %+v", input)
+
+	astID, err := primitive.ObjectIDFromHex(input.ID)
+	if err != nil {
+		return err
+	}
+	asts, err := h.asteroidService.ListLinkedTo(c.Context(), astID)
+	if err != nil {
+		return err
+	}
+	toJ := make([]*Item, 0, len(asts))
+	for _, ast := range asts {
+		toJ = append(toJ, MakeItemPresenter(ast))
+	}
 	return c.JSON(toJ)
 }

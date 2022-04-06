@@ -101,3 +101,25 @@ func (s *Service) Get(ctx context.Context, astID primitive.ObjectID) (*Asteroid,
 	}
 	return ast, nil
 }
+
+func (s *Service) ListLinkedFrom(ctx context.Context, astID primitive.ObjectID) ([]*Asteroid, error) {
+	ast, err := s.repo.Get(ctx, astID)
+	if err != nil {
+		return nil, err
+	}
+	if ast.AuthorID != auth.FromContext(ctx).ID {
+		return nil, errors.New("the target node not belong to you")
+	}
+	return s.repo.ListLinkedFrom(ctx, astID)
+}
+
+func (s *Service) ListLinkedTo(ctx context.Context, astID primitive.ObjectID) ([]*Asteroid, error) {
+	ast, err := s.repo.Get(ctx, astID)
+	if err != nil {
+		return nil, err
+	}
+	if ast.AuthorID != auth.FromContext(ctx).ID {
+		return nil, errors.New("the target node not belong to you")
+	}
+	return s.repo.ListLinkedTo(ctx, astID)
+}
