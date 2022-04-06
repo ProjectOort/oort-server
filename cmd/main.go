@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"github.com/ProjectOort/oort-server/biz/graph"
+	"github.com/ProjectOort/oort-server/biz/search"
+	"github.com/olivere/elastic/v7"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,6 +12,8 @@ import (
 
 	account_handlers "github.com/ProjectOort/oort-server/api/handler/account"
 	asteroid_handlers "github.com/ProjectOort/oort-server/api/handler/asteroid"
+	graph_handlers "github.com/ProjectOort/oort-server/api/handler/graph"
+	search_handlers "github.com/ProjectOort/oort-server/api/handler/search"
 	"github.com/ProjectOort/oort-server/api/middleware/auth"
 	"github.com/ProjectOort/oort-server/api/middleware/requestid"
 	"github.com/ProjectOort/oort-server/biz/account"
@@ -81,13 +86,23 @@ func boostrap(app *fiber.App, logger *zap.Logger, cfg *conf.App) func() {
 	panicIfFailed(err)
 	go testNeo4jConnection(logger, neo4jDriver)
 
+	elasticClient, err := elastic.NewClient(
+		elastic.SetURL(cfg.Repo.Elasticsearch.URL),
+		elastic.SetBasicAuth(cfg.Repo.Elasticsearch.Username, cfg.Repo.Elasticsearch.Password))
+	panicIfFailed(err)
+	go testElasticsearchConnection(logger, elasticClient, cfg.Repo.Elasticsearch.URL)
+
 	// repositories
 	accountRepo := repo.NewAccountRepo(mongoDatabase)
 	asteroidRepo := repo.NewAsteroidRepo(mongoDatabase, neo4jDriver)
+	graphRepo := repo.NewGraphRepo(mongoDatabase, neo4jDriver)
+	searchRepo := repo.NewSearchRepo(elasticClient)
 
 	// services
 	accountService := account.NewService(logger, &cfg.Biz.Account, accountRepo)
 	asteroidService := asteroid.NewService(logger, asteroidRepo)
+	graphService := graph.NewService(logger, graphRepo)
+	searchService := search.NewService(logger, searchRepo)
 
 	app.Use(pprof.New())
 	app.Use(requestid.New())
@@ -99,6 +114,8 @@ func boostrap(app *fiber.App, logger *zap.Logger, cfg *conf.App) func() {
 
 	api.Use(auth.New(logger, accountService))
 	asteroid_handlers.MakeHandlers(api, logger, asteroidService)
+	graph_handlers.MakeHandlers(api, logger, graphService)
+	search_handlers.MakeHandlers(api, logger, searchService)
 
 	return func() {
 		printCloseStatus(logger, "Neo4j driver", neo4jDriver.Close())
@@ -116,6 +133,12 @@ func testNeo4jConnection(log *zap.Logger, _neo4j neo4j.Driver) {
 	time.Sleep(time.Second)
 	err := _neo4j.VerifyConnectivity()
 	printConnectStatus(log, "Neo4j", err)
+}
+
+func testElasticsearchConnection(log *zap.Logger, _es *elastic.Client, url string) {
+	time.Sleep(time.Second)
+	_, _, err := _es.Ping(url).Do(context.Background())
+	printConnectStatus(log, "Elasticsearch", err)
 }
 
 func panicIfFailed(err error) {

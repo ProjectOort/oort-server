@@ -15,6 +15,13 @@ type Repo interface {
 	GetGraphByAsteroidID(ctx context.Context, astID primitive.ObjectID) (*Graph, error)
 }
 
-func (x *Service) GetByAsteroidID(ctx context.Context, astID primitive.ObjectID) (*Graph, error) {
-	return x.repo.GetGraphByAsteroidID(ctx, astID)
+func NewService(logger *zap.Logger, repo Repo) *Service {
+	return &Service{
+		logger: logger,
+		repo:   repo,
+	}
+}
+
+func (s *Service) GetByAsteroidID(ctx context.Context, astID primitive.ObjectID) (*Graph, error) {
+	return s.repo.GetGraphByAsteroidID(ctx, astID)
 }

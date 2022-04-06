@@ -8,12 +8,16 @@ import (
 )
 
 type SearchRepo struct {
-	_es elastic.Client
+	_es *elastic.Client
 }
 
 const (
 	_AsteroidIndex = "oort_server.asteroid"
 )
+
+func NewSearchRepo(_es *elastic.Client) *SearchRepo {
+	return &SearchRepo{_es: _es}
+}
 
 func (x *SearchRepo) SearchAsteroid(ctx context.Context, text string, authorID primitive.ObjectID) ([]*search.Item, error) {
 	query := elastic.NewBoolQuery()
