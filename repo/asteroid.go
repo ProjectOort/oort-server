@@ -145,12 +145,12 @@ func (x *AsteroidRepo) UpdateContent(ctx context.Context, a *asteroid.Asteroid) 
 }
 
 func (x *AsteroidRepo) Get(ctx context.Context, id primitive.ObjectID) (*asteroid.Asteroid, error) {
-	a := new(asteroid.Asteroid)
+	ast := new(asteroid.Asteroid)
 	err := x._mongo.Collection("asteroid").FindOne(ctx, bson.D{
 		{"_id", id},
 		{"state", true},
-	}).Decode(&a)
-	return a, err
+	}).Decode(&ast)
+	return ast, err
 }
 
 func (x *AsteroidRepo) ListHub(ctx context.Context, authorID primitive.ObjectID) ([]*asteroid.Asteroid, error) {
@@ -164,16 +164,16 @@ func (x *AsteroidRepo) ListHub(ctx context.Context, authorID primitive.ObjectID)
 	}
 	defer cursor.Close(ctx)
 
-	as := make([]*asteroid.Asteroid, 0)
+	asts := make([]*asteroid.Asteroid, 0)
 	for cursor.Next(ctx) {
-		var a asteroid.Asteroid
-		err := cursor.Decode(&a)
+		var ast asteroid.Asteroid
+		err := cursor.Decode(&ast)
 		if err != nil {
 			return nil, err
 		}
-		as = append(as, &a)
+		asts = append(asts, &ast)
 	}
-	return as, nil
+	return asts, nil
 }
 
 func (x *AsteroidRepo) List(ctx context.Context, aIDs []primitive.ObjectID) ([]*asteroid.Asteroid, error) {
@@ -185,16 +185,16 @@ func (x *AsteroidRepo) List(ctx context.Context, aIDs []primitive.ObjectID) ([]*
 	if err != nil {
 		return nil, err
 	}
-	as := make([]*asteroid.Asteroid, 0)
+	asts := make([]*asteroid.Asteroid, 0)
 	for result.Next(ctx) {
-		var a asteroid.Asteroid
-		err := result.Decode(&a)
+		var ast asteroid.Asteroid
+		err := result.Decode(&ast)
 		if err != nil {
 			return nil, err
 		}
-		as = append(as, &a)
+		asts = append(asts, &ast)
 	}
-	return as, err
+	return asts, err
 }
 
 func (x *AsteroidRepo) BatchExist(ctx context.Context, aIDs []primitive.ObjectID) (bool, error) {
@@ -237,16 +237,16 @@ func (x *AsteroidRepo) ListLinkedFrom(ctx context.Context, id primitive.ObjectID
 	}}, options.Find().SetProjection(bson.D{
 		{"content", 0},
 	}))
-	as := make([]*asteroid.Asteroid, 0, len(ids))
+	asts := make([]*asteroid.Asteroid, 0, len(ids))
 	for mongoResult.Next(ctx) {
-		var a asteroid.Asteroid
-		err := mongoResult.Decode(&a)
+		var ast asteroid.Asteroid
+		err := mongoResult.Decode(&ast)
 		if err != nil {
 			return nil, err
 		}
-		as = append(as, &a)
+		asts = append(asts, &ast)
 	}
-	return as, nil
+	return asts, nil
 }
 
 func (x *AsteroidRepo) ListLinkedTo(ctx context.Context, id primitive.ObjectID) ([]*asteroid.Asteroid, error) {
@@ -275,15 +275,15 @@ func (x *AsteroidRepo) ListLinkedTo(ctx context.Context, id primitive.ObjectID) 
 	}}, options.Find().SetProjection(bson.D{
 		{"content", 0},
 	}))
-	as := make([]*asteroid.Asteroid, 0, len(ids))
+	asts := make([]*asteroid.Asteroid, 0, len(ids))
 	for mongoResult.Next(ctx) {
-		var a asteroid.Asteroid
-		err := mongoResult.Decode(&a)
+		var ast asteroid.Asteroid
+		err := mongoResult.Decode(&ast)
 		if err != nil {
 			return nil, err
 		}
-		as = append(as, &a)
+		asts = append(asts, &ast)
 	}
 
-	return as, nil
+	return asts, nil
 }
