@@ -21,7 +21,7 @@ type handler struct {
 }
 
 func (h *handler) login(c *fiber.Ctx) error {
-	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
 		Identifier string `json:"identifier"`
@@ -30,7 +30,7 @@ func (h *handler) login(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H] parsed params, input = %+v", input)
+	log.Debugf("parsed params, input = %+v", input)
 
 	acc, err := h.accountService.Login(c.Context(), input.Identifier, input.Password)
 	if err != nil {
@@ -47,7 +47,7 @@ func (h *handler) login(c *fiber.Ctx) error {
 }
 
 func (h *handler) register(c *fiber.Ctx) error {
-	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
 		AvatarURL   string `json:"avatar_url"`
@@ -59,7 +59,7 @@ func (h *handler) register(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H] parsed params, input = %+v", input)
+	log.Debugf("parsed params, input = %+v", input)
 
 	err := h.accountService.Register(c.Context(), &account.Account{
 		NickName:    input.NickName,
@@ -72,7 +72,7 @@ func (h *handler) register(c *fiber.Ctx) error {
 }
 
 func (h *handler) oAuthGitee(c *fiber.Ctx) error {
-	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
 		Code string `json:"code"`
@@ -80,7 +80,7 @@ func (h *handler) oAuthGitee(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H] parsed params, input = %+v", input)
+	log.Debugf("parsed params, input = %+v", input)
 
 	acc, err := h.accountService.OAuthGitee(c.Context(), input.Code)
 	if err != nil {

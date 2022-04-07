@@ -20,7 +20,7 @@ type handler struct {
 }
 
 func (h *handler) getByAsteroidID(c *fiber.Ctx) error {
-	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
 		ID string `json:"id"`
@@ -28,7 +28,7 @@ func (h *handler) getByAsteroidID(c *fiber.Ctx) error {
 	if err := c.QueryParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H] parsed params, input = %+v", input)
+	log.Debugf("parsed params, input = %+v", input)
 
 	astID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {

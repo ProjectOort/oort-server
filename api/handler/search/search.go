@@ -19,7 +19,7 @@ type handler struct {
 }
 
 func (h *handler) searchAsteroid(c *fiber.Ctx) error {
-	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
 		Text string `json:"q"`
@@ -27,7 +27,7 @@ func (h *handler) searchAsteroid(c *fiber.Ctx) error {
 	if err := c.QueryParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H] parsed params, input = %+v", input)
+	log.Debugf("parsed params, input = %+v", input)
 
 	items, err := h.searchService.Asteroid(c.Context(), input.Text)
 	if err != nil {

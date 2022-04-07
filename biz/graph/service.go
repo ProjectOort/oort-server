@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
@@ -23,5 +24,6 @@ func NewService(logger *zap.Logger, repo Repo) *Service {
 }
 
 func (s *Service) GetByAsteroidID(ctx context.Context, astID primitive.ObjectID) (*Graph, error) {
-	return s.repo.GetGraphByAsteroidID(ctx, astID)
+	gph, err := s.repo.GetGraphByAsteroidID(ctx, astID)
+	return gph, errors.WithStack(err)
 }

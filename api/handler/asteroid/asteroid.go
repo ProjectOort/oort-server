@@ -26,7 +26,7 @@ type handler struct {
 }
 
 func (h *handler) create(c *fiber.Ctx) error {
-	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
 		Hub      bool     `json:"hub"`
@@ -38,7 +38,7 @@ func (h *handler) create(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H] parsed params, input = %+v", input)
+	log.Debugf("parsed params, input = %+v", input)
 
 	linkFromIDs := make([]primitive.ObjectID, 0, len(input.LinkFrom))
 	linkToIDs := make([]primitive.ObjectID, 0, len(input.LinkTo))
@@ -77,7 +77,7 @@ func (h *handler) create(c *fiber.Ctx) error {
 }
 
 func (h *handler) sync(c *fiber.Ctx) error {
-	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
 		ID      string `json:"id"`
@@ -86,7 +86,7 @@ func (h *handler) sync(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H] parsed params, input = %+v", input)
+	log.Debugf("parsed params, input = %+v", input)
 
 	astID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {
@@ -109,7 +109,7 @@ func (h *handler) list(c *fiber.Ctx) error {
 }
 
 func (h *handler) get(c *fiber.Ctx) error {
-	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
 		ID string `json:"id"`
@@ -117,7 +117,7 @@ func (h *handler) get(c *fiber.Ctx) error {
 	if err := c.QueryParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H] parsed params, input = %+v", input)
+	log.Debugf("parsed params, input = %+v", input)
 
 	astID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {
@@ -132,7 +132,7 @@ func (h *handler) get(c *fiber.Ctx) error {
 }
 
 func (h *handler) listLinkedFrom(c *fiber.Ctx) error {
-	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
 		ID string `json:"id"`
@@ -140,7 +140,7 @@ func (h *handler) listLinkedFrom(c *fiber.Ctx) error {
 	if err := c.QueryParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H] parsed params, input = %+v", input)
+	log.Debugf("parsed params, input = %+v", input)
 
 	astID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {
@@ -158,7 +158,7 @@ func (h *handler) listLinkedFrom(c *fiber.Ctx) error {
 }
 
 func (h *handler) listLinkedTo(c *fiber.Ctx) error {
-	log := h.logger.With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
 		ID string `json:"id"`
@@ -166,7 +166,7 @@ func (h *handler) listLinkedTo(c *fiber.Ctx) error {
 	if err := c.QueryParser(&input); err != nil {
 		return err
 	}
-	log.Debugf("[H] parsed params, input = %+v", input)
+	log.Debugf("parsed params, input = %+v", input)
 
 	astID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {

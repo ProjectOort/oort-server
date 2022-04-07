@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/ProjectOort/oort-server/api/middleware/gerrors"
 	"github.com/ProjectOort/oort-server/biz/graph"
 	"github.com/ProjectOort/oort-server/biz/search"
 	"github.com/olivere/elastic/v7"
@@ -37,15 +38,15 @@ import (
 
 func main() {
 	cfg := conf.Parse("conf/")
-	app := initApp(cfg)
 	logger := initLogger(&cfg.Logger)
+	app := initApp(cfg, logger)
 	cleanup := boostrap(app, logger, cfg)
 
 	done := make(chan struct{})
 	go func() {
 		err := app.Listen(cfg.Endpoint.HTTP.URL)
 		if err != nil {
-			logger.Error("[APP] App Error", zap.Error(err))
+			logger.Error("[SHUT_DOWN] App Error", zap.Error(err))
 		}
 		done <- struct{}{}
 	}()
@@ -58,7 +59,7 @@ func main() {
 		return
 	case <-sigint:
 		err := app.Shutdown()
-		log := logger.Named("[DOWN]")
+		log := logger.Named("[SHUT_DOWN]")
 		log.Info("Application start to shutdown...")
 		if err != nil {
 			log.Error("Fiber occurred an error", zap.Error(err))
@@ -67,9 +68,10 @@ func main() {
 	}
 }
 
-func initApp(cfg *conf.App) *fiber.App {
+func initApp(cfg *conf.App, logger *zap.Logger) *fiber.App {
 	return fiber.New(fiber.Config{
-		AppName: cfg.Name,
+		AppName:      cfg.Name,
+		ErrorHandler: gerrors.New(logger),
 	})
 }
 
@@ -187,7 +189,7 @@ func panicIfFailed(err error) {
 }
 
 func printCloseStatus(log *zap.Logger, name string, err error) {
-	log = log.WithOptions(zap.AddCallerSkip(1)).Named("[DOWN]")
+	log = log.WithOptions(zap.AddCallerSkip(1)).Named("[SHUT_DOWN]")
 	if err != nil {
 		log.Sugar().Errorw(
 			fmt.Sprintf("%s Driver failed to close, error:\n%+v", name, err),
@@ -198,7 +200,7 @@ func printCloseStatus(log *zap.Logger, name string, err error) {
 }
 
 func printConnectStatus(log *zap.Logger, name string, err error) {
-	log = log.WithOptions(zap.AddCallerSkip(1)).Named("[INIT]")
+	log = log.WithOptions(zap.AddCallerSkip(1)).Named("[START_UP]")
 	if err != nil {
 		log.Sugar().Errorw(
 			fmt.Sprintf("%s connect failed, error:\n%+v", name, err),

@@ -2,6 +2,9 @@ package asteroid
 
 import (
 	"context"
+	bizerr "github.com/ProjectOort/oort-server/biz/errors"
+	"go.mongodb.org/mongo-driver/mongo"
+	"net/http"
 	"time"
 
 	"github.com/ProjectOort/oort-server/api/middleware/auth"
@@ -45,7 +48,7 @@ func (s *Service) Create(ctx context.Context, ast *Asteroid, linkFromIDs []primi
 	}
 
 	if err := s.repo.Create(ctx, ast, linkFromIDs, linkToIDs); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return ast, nil
 }
@@ -64,11 +67,14 @@ func (s *Service) checkIfTargetAsteroidBelongToUser(ctx context.Context, accID p
 	}
 	asts, err := s.repo.List(ctx, astIDs)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
+	}
+	if len(asts) != len(astIDs) {
+		return bizerr.New().StatusCode(http.StatusForbidden).Msg("你要连接的某些节点不存在").WrapSelf()
 	}
 	for _, ast := range asts {
 		if ast.AuthorID != accID {
-			return errors.New("the target node not belong to you")
+			return bizerr.New().StatusCode(http.StatusForbidden).Msg("你没有权限连接不属于你的节点").WrapSelf()
 		}
 	}
 	return nil
@@ -77,11 +83,14 @@ func (s *Service) checkIfTargetAsteroidBelongToUser(ctx context.Context, accID p
 func (s *Service) Sync(ctx context.Context, ast *Asteroid) error {
 	existedAsteroid, err := s.repo.Get(ctx, ast.ID)
 	if err != nil {
-		return err
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return bizerr.New().StatusCode(http.StatusNotFound).Msg("你要同步的节点不存在").WrapSelf()
+		}
+		return errors.WithStack(err)
 	}
 	accID := auth.FromContext(ctx).ID
 	if existedAsteroid.AuthorID != accID {
-		return errors.New("the target node not belong to you")
+		return bizerr.New().StatusCode(http.StatusForbidden).Msg("你无权同步不属于你的节点").WrapSelf()
 	}
 	return s.repo.UpdateContent(ctx, ast)
 }
@@ -94,10 +103,13 @@ func (s *Service) List(ctx context.Context) ([]*Asteroid, error) {
 func (s *Service) Get(ctx context.Context, astID primitive.ObjectID) (*Asteroid, error) {
 	ast, err := s.repo.Get(ctx, astID)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, bizerr.New().StatusCode(http.StatusNotFound).Msg("你要查看的节点不存在").WrapSelf()
+		}
+		return nil, errors.WithStack(err)
 	}
 	if ast.AuthorID != auth.FromContext(ctx).ID {
-		return nil, errors.New("the target node not belong to you")
+		return nil, bizerr.New().StatusCode(http.StatusForbidden).Msg("你无权查看不属于你的节点").WrapSelf()
 	}
 	return ast, nil
 }
@@ -105,21 +117,29 @@ func (s *Service) Get(ctx context.Context, astID primitive.ObjectID) (*Asteroid,
 func (s *Service) ListLinkedFrom(ctx context.Context, astID primitive.ObjectID) ([]*Asteroid, error) {
 	ast, err := s.repo.Get(ctx, astID)
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, bizerr.New().StatusCode(http.StatusNotFound).Msg("你要查看的节点不存在").WrapSelf()
+		}
 		return nil, err
 	}
 	if ast.AuthorID != auth.FromContext(ctx).ID {
-		return nil, errors.New("the target node not belong to you")
+		return nil, bizerr.New().StatusCode(http.StatusForbidden).Msg("你无权查看不属于你的节点").WrapSelf()
 	}
-	return s.repo.ListLinkedFrom(ctx, astID)
+	asts, err := s.repo.ListLinkedFrom(ctx, astID)
+	return asts, errors.WithStack(err)
 }
 
 func (s *Service) ListLinkedTo(ctx context.Context, astID primitive.ObjectID) ([]*Asteroid, error) {
 	ast, err := s.repo.Get(ctx, astID)
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, bizerr.New().StatusCode(http.StatusNotFound).Msg("你要查看的节点不存在").WrapSelf()
+		}
 		return nil, err
 	}
 	if ast.AuthorID != auth.FromContext(ctx).ID {
-		return nil, errors.New("the target node not belong to you")
+		return nil, bizerr.New().StatusCode(http.StatusForbidden).Msg("你无权查看不属于你的节点").WrapSelf()
 	}
-	return s.repo.ListLinkedTo(ctx, astID)
+	asts, err := s.repo.ListLinkedTo(ctx, astID)
+	return asts, errors.WithStack(err)
 }

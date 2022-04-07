@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"github.com/ProjectOort/oort-server/api/middleware/auth"
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
@@ -24,5 +25,6 @@ func NewService(logger *zap.Logger, repo Repo) *Service {
 }
 
 func (s *Service) Asteroid(ctx context.Context, text string) ([]*Item, error) {
-	return s.repo.SearchAsteroid(ctx, text, auth.FromContext(ctx).ID)
+	items, err := s.repo.SearchAsteroid(ctx, text, auth.FromContext(ctx).ID)
+	return items, errors.WithStack(err)
 }
