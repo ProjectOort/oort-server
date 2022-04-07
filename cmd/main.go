@@ -2,11 +2,16 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/ProjectOort/oort-server/biz/graph"
 	"github.com/ProjectOort/oort-server/biz/search"
 	"github.com/olivere/elastic/v7"
+	"go.elastic.co/ecszap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -53,9 +58,10 @@ func main() {
 		return
 	case <-sigint:
 		err := app.Shutdown()
-		logger.Info("[SHUTDOWN] Application start to shutdown...")
+		log := logger.Named("[DOWN]")
+		log.Info("Application start to shutdown...")
 		if err != nil {
-			logger.Error("[SHUTDOWN] Fiber invoke an error", zap.Error(err))
+			log.Error("Fiber occurred an error", zap.Error(err))
 		}
 		cleanup()
 	}
@@ -68,9 +74,42 @@ func initApp(cfg *conf.App) *fiber.App {
 }
 
 func initLogger(cfg *conf.Logger) *zap.Logger {
-	logger, err := zap.NewDevelopment()
-	panicIfFailed(err)
-	return logger
+	consoleEncoderConfig := zap.NewDevelopmentEncoderConfig()
+	fileEncoderConfig := ecszap.NewDefaultEncoderConfig()
+
+	rotator := &lumberjack.Logger{
+		Filename: cfg.Path,
+		MaxSize:  cfg.MaxSizeMB,
+		MaxAge:   cfg.MaxAgeDay,
+		Compress: cfg.Compress,
+	}
+
+	var level zapcore.Level
+	switch strings.TrimSpace(strings.ToLower(cfg.Level)) {
+	case "debug":
+		level = zapcore.DebugLevel
+	case "info":
+		level = zapcore.InfoLevel
+	case "warn":
+		level = zapcore.WarnLevel
+	case "error":
+		level = zapcore.ErrorLevel
+	}
+
+	core := zapcore.NewTee(
+		ecszap.WrapCore(
+			zapcore.NewCore(
+				zapcore.NewConsoleEncoder(consoleEncoderConfig),
+				zapcore.AddSync(os.Stdout),
+				level),
+		),
+		ecszap.NewCore(
+			fileEncoderConfig,
+			zapcore.AddSync(rotator),
+			level),
+	)
+
+	return zap.New(core, zap.AddCaller())
 }
 
 func boostrap(app *fiber.App, logger *zap.Logger, cfg *conf.App) func() {
@@ -148,19 +187,23 @@ func panicIfFailed(err error) {
 }
 
 func printCloseStatus(log *zap.Logger, name string, err error) {
-	log = log.WithOptions(zap.AddCallerSkip(1))
+	log = log.WithOptions(zap.AddCallerSkip(1)).Named("[DOWN]")
 	if err != nil {
-		log.Sugar().Errorf("[SHUTDOWN] %s Driver failed to close, error = %+v", name, err)
+		log.Sugar().Errorw(
+			fmt.Sprintf("%s Driver failed to close, error:\n%+v", name, err),
+			zap.Error(err))
 		return
 	}
-	log.Sugar().Infof("[SHUTDOWN] %s closed successfully", name)
+	log.Sugar().Infof("%s closed successfully", name)
 }
 
 func printConnectStatus(log *zap.Logger, name string, err error) {
-	log = log.WithOptions(zap.AddCallerSkip(1))
+	log = log.WithOptions(zap.AddCallerSkip(1)).Named("[INIT]")
 	if err != nil {
-		log.Sugar().Errorf("[INIT] %s connect failed, error = %+v", name, err)
+		log.Sugar().Errorw(
+			fmt.Sprintf("%s connect failed, error:\n%+v", name, err),
+			zap.Error(err))
 		return
 	}
-	log.Sugar().Infof("[INIT] Successfully connected to %s", name)
+	log.Sugar().Infof("Successfully connected to %s", name)
 }
