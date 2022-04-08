@@ -103,37 +103,37 @@ func (x *AsteroidRepo) Create(ctx context.Context, a *asteroid.Asteroid, linkFro
 	return err
 }
 
-func (x *AsteroidRepo) createWithTx(ctx context.Context, a *asteroid.Asteroid) error {
-	mongoSession, err := x._mongo.Client().StartSession()
-	if err != nil {
-		return err
-	}
-	defer mongoSession.EndSession(ctx)
-	neo4jSession := x._neo4j.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+// func (x *AsteroidRepo) createWithTx(ctx context.Context, a *asteroid.Asteroid) error {
+// 	mongoSession, err := x._mongo.Client().StartSession()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer mongoSession.EndSession(ctx)
+// 	neo4jSession := x._neo4j.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 
-	neo4jInsertionCallback := func(tx neo4j.Transaction) (interface{}, error) {
-		result, err := tx.Run("CREATE (a: Asteroid {id: $id, title: $title, authorId: $authorId})", map[string]interface{}{
-			"id":       a.ID.Hex(),
-			"title":    a.Title,
-			"authorId": a.AuthorID.Hex(),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return result.Consume()
-	}
+// 	neo4jInsertionCallback := func(tx neo4j.Transaction) (interface{}, error) {
+// 		result, err := tx.Run("CREATE (a: Asteroid {id: $id, title: $title, authorId: $authorId})", map[string]interface{}{
+// 			"id":       a.ID.Hex(),
+// 			"title":    a.Title,
+// 			"authorId": a.AuthorID.Hex(),
+// 		})
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return result.Consume()
+// 	}
 
-	mongoInsertionCallback := func(sessCtx mongo.SessionContext) (interface{}, error) {
-		_, err := x._mongo.Collection("asteroid").InsertOne(sessCtx, a)
-		if err != nil {
-			return nil, err
-		}
-		return neo4jSession.WriteTransaction(neo4jInsertionCallback)
-	}
+// 	mongoInsertionCallback := func(sessCtx mongo.SessionContext) (interface{}, error) {
+// 		_, err := x._mongo.Collection("asteroid").InsertOne(sessCtx, a)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return neo4jSession.WriteTransaction(neo4jInsertionCallback)
+// 	}
 
-	_, err = mongoSession.WithTransaction(ctx, mongoInsertionCallback)
-	return err
-}
+// 	_, err = mongoSession.WithTransaction(ctx, mongoInsertionCallback)
+// 	return err
+// }
 
 func (x *AsteroidRepo) LinkTo(ctx context.Context, curAstID primitive.ObjectID, linkToIDs []primitive.ObjectID) error {
 	neo4jSession := x._neo4j.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
@@ -283,6 +283,9 @@ func (x *AsteroidRepo) ListLinkedFrom(ctx context.Context, id primitive.ObjectID
 	}}, options.Find().SetProjection(bson.D{
 		{"content", 0},
 	}))
+	if err != nil {
+		return nil, err
+	}
 	asts := make([]*asteroid.Asteroid, 0, len(ids))
 	for mongoResult.Next(ctx) {
 		var ast asteroid.Asteroid
@@ -321,6 +324,9 @@ func (x *AsteroidRepo) ListLinkedTo(ctx context.Context, id primitive.ObjectID) 
 	}}, options.Find().SetProjection(bson.D{
 		{"content", 0},
 	}))
+	if err != nil {
+		return nil, err
+	}
 	asts := make([]*asteroid.Asteroid, 0, len(ids))
 	for mongoResult.Next(ctx) {
 		var ast asteroid.Asteroid

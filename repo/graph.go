@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+
 	"github.com/ProjectOort/oort-server/biz/asteroid"
 	"github.com/ProjectOort/oort-server/biz/graph"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
@@ -59,7 +60,7 @@ func (x *GraphRepo) GetGraphByAsteroidID(ctx context.Context, astID primitive.Ob
 		}
 	}
 
-	for link, _ := range linkSet {
+	for link := range linkSet {
 		g.Links = append(g.Links,
 			graph.Link{
 				Source: nodeSet[link.source].Hex(),

@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/ProjectOort/oort-server/biz/account"
@@ -75,7 +76,7 @@ func (r *AccountRepo) GetByEmail(ctx context.Context, email string) (acc *accoun
 	return
 }
 
-// GetByMobile  finds an account record that matches the given mobile.
+// GetByMobile finds an account record that matches the given mobile.
 func (r *AccountRepo) GetByMobile(ctx context.Context, mobile string) (acc *account.Account, err error) {
 	acc = new(account.Account)
 	err = r._mongo.Collection(_CollectionAccount).FindOne(ctx, bson.D{
