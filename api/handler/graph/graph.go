@@ -1,21 +1,25 @@
 package graph
 
 import (
+	"github.com/ProjectOort/oort-server/api/middleware/gerrors"
 	"github.com/ProjectOort/oort-server/api/middleware/requestid"
 	"github.com/ProjectOort/oort-server/biz/graph"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
 
-func RegisterHandlers(r fiber.Router, logger *zap.Logger, graphService *graph.Service) {
-	h := handler{logger: logger, graphService: graphService}
+func RegisterHandlers(r fiber.Router, logger *zap.Logger, validate *validator.Validate, graphService *graph.Service) {
+	h := handler{logger, validate, graphService}
 
 	r.Get("/graph", h.getByAsteroidID)
 }
 
 type handler struct {
 	logger       *zap.Logger
+	validate     *validator.Validate
 	graphService *graph.Service
 }
 
@@ -26,9 +30,12 @@ func (h *handler) getByAsteroidID(c *fiber.Ctx) error {
 		ID string `json:"id"`
 	}
 	if err := c.QueryParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	astID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {

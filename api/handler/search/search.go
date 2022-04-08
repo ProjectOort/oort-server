@@ -1,9 +1,11 @@
 package search
 
 import (
+	"github.com/ProjectOort/oort-server/api/middleware/gerrors"
 	"github.com/ProjectOort/oort-server/api/middleware/requestid"
 	"github.com/ProjectOort/oort-server/biz/search"
 	"github.com/gofiber/fiber/v2"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -25,7 +27,7 @@ func (h *handler) searchAsteroid(c *fiber.Ctx) error {
 		Text string `json:"q"`
 	}
 	if err := c.QueryParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
 

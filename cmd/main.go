@@ -1,5 +1,6 @@
 package main
 
+//goland:noinspection GoSnakeCaseUsage
 import (
 	"context"
 	"fmt"
@@ -7,6 +8,10 @@ import (
 	"github.com/ProjectOort/oort-server/biz/collection"
 	"github.com/ProjectOort/oort-server/biz/graph"
 	"github.com/ProjectOort/oort-server/biz/search"
+	"github.com/go-playground/locales/zh"
+	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/validator/v10"
+	zh_translations "github.com/go-playground/validator/v10/translations/zh"
 	"github.com/olivere/elastic/v7"
 	"go.elastic.co/ecszap"
 	"go.uber.org/zap/zapcore"
@@ -17,12 +22,12 @@ import (
 	"syscall"
 	"time"
 
-	accounthandlers "github.com/ProjectOort/oort-server/api/handler/account"
-	asteroidhandlers "github.com/ProjectOort/oort-server/api/handler/asteroid"
-	collectionhandlers "github.com/ProjectOort/oort-server/api/handler/collection"
-	graphhandlers "github.com/ProjectOort/oort-server/api/handler/graph"
-	indexhandlers "github.com/ProjectOort/oort-server/api/handler/index"
-	searchhandlers "github.com/ProjectOort/oort-server/api/handler/search"
+	account_handlers "github.com/ProjectOort/oort-server/api/handler/account"
+	asteroid_handlers "github.com/ProjectOort/oort-server/api/handler/asteroid"
+	collection_handlers "github.com/ProjectOort/oort-server/api/handler/collection"
+	graph_handlers "github.com/ProjectOort/oort-server/api/handler/graph"
+	index_handlers "github.com/ProjectOort/oort-server/api/handler/index"
+	search_handlers "github.com/ProjectOort/oort-server/api/handler/search"
 	"github.com/ProjectOort/oort-server/api/middleware/auth"
 	"github.com/ProjectOort/oort-server/api/middleware/requestid"
 	"github.com/ProjectOort/oort-server/biz/account"
@@ -42,8 +47,9 @@ import (
 func main() {
 	cfg := conf.Parse("conf/")
 	logger := initLogger(&cfg.Logger)
-	app := initApp(cfg, logger)
-	cleanup := boostrap(app, logger, cfg)
+	validate, trans := initValidator()
+	app := initApp(cfg, logger, trans)
+	cleanup := boostrap(app, logger, cfg, validate)
 
 	done := make(chan struct{})
 	go func() {
@@ -71,10 +77,10 @@ func main() {
 	}
 }
 
-func initApp(cfg *conf.App, logger *zap.Logger) *fiber.App {
+func initApp(cfg *conf.App, logger *zap.Logger, trans ut.Translator) *fiber.App {
 	return fiber.New(fiber.Config{
 		AppName:      cfg.Name,
-		ErrorHandler: gerrors.New(logger),
+		ErrorHandler: gerrors.New(logger, trans),
 	})
 }
 
@@ -117,7 +123,17 @@ func initLogger(cfg *conf.Logger) *zap.Logger {
 	return zap.New(core, zap.AddCaller())
 }
 
-func boostrap(app *fiber.App, logger *zap.Logger, cfg *conf.App) func() {
+func initValidator() (*validator.Validate, ut.Translator) {
+	_zh := zh.New()
+	uni := ut.New(_zh, _zh)
+	trans, _ := uni.GetTranslator("zh")
+	validate := validator.New()
+	err := zh_translations.RegisterDefaultTranslations(validate, trans)
+	panicIfFailed(err)
+	return validate, trans
+}
+
+func boostrap(app *fiber.App, logger *zap.Logger, cfg *conf.App, validate *validator.Validate) func() {
 	// clients
 	mongoClient, err := mongo.Connect(context.Background(), options.Client().ApplyURI(cfg.Repo.Mongo.URL))
 	panicIfFailed(err)
@@ -156,14 +172,14 @@ func boostrap(app *fiber.App, logger *zap.Logger, cfg *conf.App) func() {
 
 	// routes
 	api := app.Group("/api/")
-	indexhandlers.RegisterHandlers(api, cfg)
-	accounthandlers.RegisterHandlers(api, logger, accountService)
+	index_handlers.RegisterHandlers(api, cfg)
+	account_handlers.RegisterHandlers(api, logger, validate, accountService)
 
 	api.Use(auth.New(logger, accountService))
-	asteroidhandlers.RegisterHandlers(api, logger, asteroidService)
-	graphhandlers.RegisterHandlers(api, logger, graphService)
-	collectionhandlers.RegisterHandlers(api, logger, collectionService)
-	searchhandlers.RegisterHandlers(api, logger, searchService)
+	asteroid_handlers.RegisterHandlers(api, logger, validate, asteroidService)
+	graph_handlers.RegisterHandlers(api, logger, validate, graphService)
+	collection_handlers.RegisterHandlers(api, logger, validate, collectionService)
+	search_handlers.RegisterHandlers(api, logger, searchService)
 
 	return func() {
 		printCloseStatus(logger, "Neo4j driver", neo4jDriver.Close())

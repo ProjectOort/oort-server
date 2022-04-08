@@ -2,15 +2,18 @@ package asteroid
 
 import (
 	"github.com/ProjectOort/oort-server/api/middleware/auth"
+	"github.com/ProjectOort/oort-server/api/middleware/gerrors"
 	"github.com/ProjectOort/oort-server/api/middleware/requestid"
 	"github.com/ProjectOort/oort-server/biz/asteroid"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
 
-func RegisterHandlers(r fiber.Router, logger *zap.Logger, asteroidService *asteroid.Service) {
-	h := &handler{logger: logger, asteroidService: asteroidService}
+func RegisterHandlers(r fiber.Router, logger *zap.Logger, validate *validator.Validate, asteroidService *asteroid.Service) {
+	h := &handler{logger, validate, asteroidService}
 
 	r.Post("/asteroid", h.create)
 	r.Post("/asteroid!linkTo", h.linkTo)
@@ -24,6 +27,7 @@ func RegisterHandlers(r fiber.Router, logger *zap.Logger, asteroidService *aster
 
 type handler struct {
 	logger          *zap.Logger
+	validate        *validator.Validate
 	asteroidService *asteroid.Service
 }
 
@@ -31,16 +35,19 @@ func (h *handler) create(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
-		Hub      bool     `json:"hub"`
-		Title    string   `json:"title"`
+		Hub      *bool    `json:"hub" validate:"required"`
+		Title    string   `json:"title" validate:"required"`
 		Content  string   `json:"content"`
 		LinkFrom []string `json:"link_from"`
 		LinkTo   []string `json:"link_to"`
 	}
 	if err := c.BodyParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	linkFromIDs := make([]primitive.ObjectID, 0, len(input.LinkFrom))
 	linkToIDs := make([]primitive.ObjectID, 0, len(input.LinkTo))
@@ -65,7 +72,7 @@ func (h *handler) create(c *fiber.Ctx) error {
 
 	accID := auth.FromCtx(c).ID
 	ast, err := h.asteroidService.Create(c.Context(), &asteroid.Asteroid{
-		Hub:      false,
+		Hub:      *input.Hub,
 		AuthorID: accID,
 		Title:    input.Title,
 		Content:  input.Content,
@@ -82,13 +89,16 @@ func (h *handler) linkTo(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
-		ID     string   `json:"id"`
-		LinkTo []string `json:"link_to"`
+		ID     string   `json:"id" validate:"required"`
+		LinkTo []string `json:"link_to" validate:"required"`
 	}
 	if err := c.BodyParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	curAstID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {
@@ -110,13 +120,16 @@ func (h *handler) linkFrom(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
-		ID       string   `json:"id"`
-		LinkFrom []string `json:"link_from"`
+		ID       string   `json:"id" validate:"required"`
+		LinkFrom []string `json:"link_from" validate:"required"`
 	}
 	if err := c.BodyParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	curAstID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {
@@ -137,13 +150,16 @@ func (h *handler) sync(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
-		ID      string `json:"id"`
+		ID      string `json:"id" validate:"required"`
 		Content string `json:"content"`
 	}
 	if err := c.BodyParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	astID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {
@@ -156,7 +172,7 @@ func (h *handler) sync(c *fiber.Ctx) error {
 func (h *handler) list(c *fiber.Ctx) error {
 	asts, err := h.asteroidService.List(c.Context())
 	if err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	toJ := make([]*Item, 0, len(asts))
 	for _, ast := range asts {
@@ -169,12 +185,15 @@ func (h *handler) get(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
-		ID string `json:"id"`
+		ID string `json:"id" validate:"required"`
 	}
 	if err := c.QueryParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	astID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {
@@ -192,12 +211,15 @@ func (h *handler) listLinkedFrom(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
-		ID string `json:"id"`
+		ID string `json:"id" validate:"required"`
 	}
 	if err := c.QueryParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	astID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {
@@ -218,12 +240,15 @@ func (h *handler) listLinkedTo(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
-		ID string `json:"id"`
+		ID string `json:"id" validate:"required"`
 	}
 	if err := c.QueryParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	astID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {

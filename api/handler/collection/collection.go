@@ -1,15 +1,18 @@
 package collection
 
 import (
+	"github.com/ProjectOort/oort-server/api/middleware/gerrors"
 	"github.com/ProjectOort/oort-server/api/middleware/requestid"
 	"github.com/ProjectOort/oort-server/biz/collection"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
 
-func RegisterHandlers(r fiber.Router, logger *zap.Logger, collectionService *collection.Service) {
-	h := handler{logger: logger, collectionService: collectionService}
+func RegisterHandlers(r fiber.Router, logger *zap.Logger, validate *validator.Validate, collectionService *collection.Service) {
+	h := handler{logger, validate, collectionService}
 
 	r.Post("/collection", h.create)
 	r.Put("/collection", h.update)
@@ -22,19 +25,23 @@ func RegisterHandlers(r fiber.Router, logger *zap.Logger, collectionService *col
 
 type handler struct {
 	logger            *zap.Logger
+	validate          *validator.Validate
 	collectionService *collection.Service
 }
 
 func (h *handler) create(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 	var input struct {
-		Name        string `json:"name"`
+		Name        string `json:"name" validate:"required"`
 		Description string `json:"description"`
 	}
 	if err := c.BodyParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	return h.collectionService.Create(c.Context(), &collection.Collection{
 		Name:        input.Name,
@@ -45,14 +52,17 @@ func (h *handler) create(c *fiber.Ctx) error {
 func (h *handler) update(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 	var input struct {
-		ID          string `json:"id"`
+		ID          string `json:"id" validate:"required"`
 		Name        string `json:"name"`
 		Description string `json:"description"`
 	}
 	if err := c.BodyParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	colID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {
@@ -69,12 +79,15 @@ func (h *handler) update(c *fiber.Ctx) error {
 func (h *handler) delete(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 	var input struct {
-		ID string `json:"id"`
+		ID string `json:"id" validate:"required"`
 	}
 	if err := c.BodyParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	colID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {
@@ -99,13 +112,16 @@ func (h *handler) list(c *fiber.Ctx) error {
 func (h *handler) pushItem(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 	var input struct {
-		CollectionID string `json:"collection_id"`
-		ItemID       string `json:"item_id"`
+		CollectionID string `json:"collection_id" validate:"required"`
+		ItemID       string `json:"item_id" validate:"required"`
 	}
 	if err := c.BodyParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	colID, err := primitive.ObjectIDFromHex(input.CollectionID)
 	if err != nil {
@@ -123,13 +139,16 @@ func (h *handler) pushItem(c *fiber.Ctx) error {
 func (h *handler) popItem(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 	var input struct {
-		CollectionID string `json:"collection_id"`
-		ItemID       string `json:"item_id"`
+		CollectionID string `json:"collection_id" validate:"required"`
+		ItemID       string `json:"item_id" validate:"required"`
 	}
 	if err := c.BodyParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	colID, err := primitive.ObjectIDFromHex(input.CollectionID)
 	if err != nil {
@@ -146,12 +165,15 @@ func (h *handler) popItem(c *fiber.Ctx) error {
 func (h *handler) listItems(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 	var input struct {
-		ID string `json:"id"`
+		ID string `json:"id" validate:"required"`
 	}
 	if err := c.QueryParser(&input); err != nil {
-		return err
+		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
 	log.Debugf("parsed params, input = %+v", input)
+	if err := h.validate.Struct(input); err != nil {
+		return err
+	}
 
 	colID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {
