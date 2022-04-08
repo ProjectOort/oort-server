@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func MakeHandlers(r fiber.Router, logger *zap.Logger, asteroidService *asteroid.Service) {
+func RegisterHandlers(r fiber.Router, logger *zap.Logger, asteroidService *asteroid.Service) {
 	h := &handler{logger: logger, asteroidService: asteroidService}
 
 	r.Post("/asteroid", h.create)

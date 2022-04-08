@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func MakeHandlers(r fiber.Router, logger *zap.Logger, accountService *account.Service) {
+func RegisterHandlers(r fiber.Router, logger *zap.Logger, accountService *account.Service) {
 	h := &handler{logger: logger, accountService: accountService}
 
 	r.Post("/account!login", h.login)

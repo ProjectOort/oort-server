@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func MakeHandlers(r fiber.Router, logger *zap.Logger, graphService *graph.Service) {
+func RegisterHandlers(r fiber.Router, logger *zap.Logger, graphService *graph.Service) {
 	h := handler{logger: logger, graphService: graphService}
 
 	r.Get("/graph", h.getByAsteroidID)

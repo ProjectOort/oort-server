@@ -151,12 +151,12 @@ func boostrap(app *fiber.App, logger *zap.Logger, cfg *conf.App) func() {
 
 	// routes
 	api := app.Group("/api/")
-	accounthandlers.MakeHandlers(api, logger, accountService)
+	accounthandlers.RegisterHandlers(api, logger, accountService)
 
 	api.Use(auth.New(logger, accountService))
-	asteroidhandlers.MakeHandlers(api, logger, asteroidService)
-	graphhandlers.MakeHandlers(api, logger, graphService)
-	searchhandlers.MakeHandlers(api, logger, searchService)
+	asteroidhandlers.RegisterHandlers(api, logger, asteroidService)
+	graphhandlers.RegisterHandlers(api, logger, graphService)
+	searchhandlers.RegisterHandlers(api, logger, searchService)
 
 	return func() {
 		printCloseStatus(logger, "Neo4j driver", neo4jDriver.Close())

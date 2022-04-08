@@ -5,7 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func MakeHandlers(r fiber.Router, cfg *conf.App) {
+func RegisterHandlers(r fiber.Router, cfg *conf.App) {
 	var h = handler{cfg: cfg}
 	r.Get("/", h.Index)
 }
