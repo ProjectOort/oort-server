@@ -10,9 +10,10 @@ import (
 func MakeHandlers(r fiber.Router, logger *zap.Logger, accountService *account.Service) {
 	h := &handler{logger: logger, accountService: accountService}
 
-	r.Post("/account/login", h.login)
-	r.Post("/account/register", h.register)
-	r.Post("/account/oauth/gitee", h.oAuthGitee)
+	r.Post("/account!login", h.login)
+	r.Post("/account!register", h.register)
+	r.Post("/account!oauth/gitee", h.oAuthGitee)
+
 }
 
 type handler struct {
@@ -94,4 +95,19 @@ func (h *handler) oAuthGitee(c *fiber.Ctx) error {
 
 	toJ := MakeAccountPresenter(acc, token)
 	return c.JSON(toJ)
+}
+
+func (h *handler) updatePassword(c *fiber.Ctx) error {
+	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+
+	var input struct {
+		OldPassword string `json:"old_password"`
+		NewPassword string `json:"new_password"`
+	}
+	if err := c.BodyParser(&input); err != nil {
+		return err
+	}
+	log.Debugf("parsed params, input = %+v", input)
+
+	return h.accountService.UpdatePassword(c.Context(), input.NewPassword, input.OldPassword)
 }

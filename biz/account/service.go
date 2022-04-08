@@ -2,6 +2,7 @@ package account
 
 import (
 	"context"
+	"github.com/ProjectOort/oort-server/api/middleware/auth"
 	bizerr "github.com/ProjectOort/oort-server/biz/errors"
 	"github.com/pkg/errors"
 	"net/http"
@@ -23,6 +24,8 @@ type Service struct {
 
 type Repo interface {
 	Create(ctx context.Context, account *Account) error
+	Get(ctx context.Context, id primitive.ObjectID) (*Account, error)
+	Update(ctx context.Context, acc *Account) error
 	GetByGiteeID(ctx context.Context, id int) (*Account, error)
 	GetByUserName(ctx context.Context, uname string) (*Account, error)
 	GetByEmail(ctx context.Context, email string) (*Account, error)
@@ -167,4 +170,19 @@ func (s *Service) OAuthGitee(ctx context.Context, code string) (*Account, error)
 	}
 
 	return account, nil
+}
+
+func (s *Service) UpdatePassword(ctx context.Context, newPasswd, oldPasswd string) error {
+	acc, err := s.repo.Get(ctx, auth.FromContext(ctx).ID)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	if !acc.PasswdEqual(oldPasswd) {
+		return bizerr.New().StatusCode(http.StatusForbidden).Msg("原密码错误").WrapSelf()
+	}
+	acc.Password = newPasswd
+	if err = acc.HashPasswd(); err != nil {
+		return errors.WithStack(err)
+	}
+	return errors.WithStack(s.repo.Update(ctx, acc))
 }
