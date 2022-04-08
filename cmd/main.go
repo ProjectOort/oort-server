@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/ProjectOort/oort-server/api/middleware/gerrors"
+	"github.com/ProjectOort/oort-server/biz/collection"
 	"github.com/ProjectOort/oort-server/biz/graph"
 	"github.com/ProjectOort/oort-server/biz/search"
 	"github.com/olivere/elastic/v7"
@@ -18,6 +19,7 @@ import (
 
 	accounthandlers "github.com/ProjectOort/oort-server/api/handler/account"
 	asteroidhandlers "github.com/ProjectOort/oort-server/api/handler/asteroid"
+	collectionhandlers "github.com/ProjectOort/oort-server/api/handler/collection"
 	graphhandlers "github.com/ProjectOort/oort-server/api/handler/graph"
 	indexhandlers "github.com/ProjectOort/oort-server/api/handler/index"
 	searchhandlers "github.com/ProjectOort/oort-server/api/handler/search"
@@ -138,11 +140,13 @@ func boostrap(app *fiber.App, logger *zap.Logger, cfg *conf.App) func() {
 	accountRepo := repo.NewAccountRepo(mongoDatabase)
 	asteroidRepo := repo.NewAsteroidRepo(mongoDatabase, neo4jDriver)
 	graphRepo := repo.NewGraphRepo(mongoDatabase, neo4jDriver)
+	collectionRepo := repo.NewCollectionRepo(mongoDatabase)
 	searchRepo := repo.NewSearchRepo(elasticClient)
 
 	// services
 	accountService := account.NewService(logger, &cfg.Biz.Account, accountRepo)
 	asteroidService := asteroid.NewService(logger, asteroidRepo)
+	collectionService := collection.NewService(logger, collectionRepo)
 	graphService := graph.NewService(logger, graphRepo)
 	searchService := search.NewService(logger, searchRepo)
 
@@ -158,6 +162,7 @@ func boostrap(app *fiber.App, logger *zap.Logger, cfg *conf.App) func() {
 	api.Use(auth.New(logger, accountService))
 	asteroidhandlers.RegisterHandlers(api, logger, asteroidService)
 	graphhandlers.RegisterHandlers(api, logger, graphService)
+	collectionhandlers.RegisterHandlers(api, logger, collectionService)
 	searchhandlers.RegisterHandlers(api, logger, searchService)
 
 	return func() {
