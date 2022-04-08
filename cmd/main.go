@@ -19,6 +19,7 @@ import (
 	accounthandlers "github.com/ProjectOort/oort-server/api/handler/account"
 	asteroidhandlers "github.com/ProjectOort/oort-server/api/handler/asteroid"
 	graphhandlers "github.com/ProjectOort/oort-server/api/handler/graph"
+	indexhandlers "github.com/ProjectOort/oort-server/api/handler/index"
 	searchhandlers "github.com/ProjectOort/oort-server/api/handler/search"
 	"github.com/ProjectOort/oort-server/api/middleware/auth"
 	"github.com/ProjectOort/oort-server/api/middleware/requestid"
@@ -151,6 +152,7 @@ func boostrap(app *fiber.App, logger *zap.Logger, cfg *conf.App) func() {
 
 	// routes
 	api := app.Group("/api/")
+	indexhandlers.RegisterHandlers(api, cfg)
 	accounthandlers.RegisterHandlers(api, logger, accountService)
 
 	api.Use(auth.New(logger, accountService))
