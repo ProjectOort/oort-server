@@ -44,7 +44,7 @@ func (h *handler) create(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "body", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (h *handler) linkTo(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "body", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (h *handler) linkFrom(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "body", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -156,7 +156,7 @@ func (h *handler) sync(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "body", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func (h *handler) get(c *fiber.Ctx) error {
 	if err := c.QueryParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "query", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -216,7 +216,7 @@ func (h *handler) listLinkedFrom(c *fiber.Ctx) error {
 	if err := c.QueryParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "query", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func (h *handler) listLinkedTo(c *fiber.Ctx) error {
 	if err := c.QueryParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "query", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}

@@ -32,7 +32,7 @@ func (h *handler) getByAsteroidID(c *fiber.Ctx) error {
 	if err := c.QueryParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "query", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}

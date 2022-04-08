@@ -38,7 +38,7 @@ func (h *handler) create(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "body", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (h *handler) update(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "body", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (h *handler) delete(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "body", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (h *handler) pushItem(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "body", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (h *handler) popItem(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "body", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -170,7 +170,7 @@ func (h *handler) listItems(c *fiber.Ctx) error {
 	if err := c.QueryParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "query", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}

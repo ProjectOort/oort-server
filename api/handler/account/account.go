@@ -35,7 +35,7 @@ func (h *handler) login(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "body", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (h *handler) register(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "body", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (h *handler) oAuthGitee(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "body", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}
@@ -120,7 +120,7 @@ func (h *handler) updatePassword(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "body", input)
 	if err := h.validate.Struct(input); err != nil {
 		return err
 	}

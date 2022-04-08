@@ -29,7 +29,7 @@ func (h *handler) searchAsteroid(c *fiber.Ctx) error {
 	if err := c.QueryParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
 	}
-	log.Debugf("parsed params, input = %+v", input)
+	log.Debugw("parsed params", "query", input)
 
 	items, err := h.searchService.Asteroid(c.Context(), input.Text)
 	if err != nil {
