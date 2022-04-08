@@ -135,6 +135,52 @@ func (x *AsteroidRepo) createWithTx(ctx context.Context, a *asteroid.Asteroid) e
 	return err
 }
 
+func (x *AsteroidRepo) LinkTo(ctx context.Context, curAstID primitive.ObjectID, linkToIDs []primitive.ObjectID) error {
+	neo4jSession := x._neo4j.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer neo4jSession.Close()
+
+	linkTo := make([]string, len(linkToIDs))
+	for i, id := range linkToIDs {
+		linkTo[i] = id.Hex()
+	}
+
+	createLinkCypher := "MATCH (to:Asteroid), (cur:Asteroid) " +
+		"WHERE to.id IN $toIds AND cur.id = $curId " +
+		"CREATE (cur)-[r:REFER]->(to)"
+	result, err := neo4jSession.Run(createLinkCypher, map[string]interface{}{
+		"toIds": linkTo,
+		"curId": curAstID.Hex(),
+	})
+	if err != nil {
+		return err
+	}
+	_, err = result.Consume()
+	return err
+}
+
+func (x *AsteroidRepo) LinkFrom(ctx context.Context, curAstID primitive.ObjectID, linkFromIDs []primitive.ObjectID) error {
+	neo4jSession := x._neo4j.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer neo4jSession.Close()
+
+	linkFrom := make([]string, len(linkFromIDs))
+	for i, id := range linkFromIDs {
+		linkFrom[i] = id.Hex()
+	}
+
+	createLinkCypher := "MATCH (from:Asteroid), (cur:Asteroid) " +
+		"WHERE from.id IN $fromIds AND cur.id = $curId " +
+		"CREATE (from)-[r:REFER]->(cur)"
+	result, err := neo4jSession.Run(createLinkCypher, map[string]interface{}{
+		"fromIds": linkFrom,
+		"curId":   curAstID.Hex(),
+	})
+	if err != nil {
+		return err
+	}
+	_, err = result.Consume()
+	return err
+}
+
 func (x *AsteroidRepo) UpdateContent(ctx context.Context, a *asteroid.Asteroid) error {
 	_, err := x._mongo.Collection("asteroid").UpdateByID(ctx, a.ID, bson.D{{
 		"$set", bson.D{{

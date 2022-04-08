@@ -20,6 +20,8 @@ type Service struct {
 
 type Repo interface {
 	Create(context.Context, *Asteroid, []primitive.ObjectID, []primitive.ObjectID) error
+	LinkTo(context.Context, primitive.ObjectID, []primitive.ObjectID) error
+	LinkFrom(context.Context, primitive.ObjectID, []primitive.ObjectID) error
 	UpdateContent(context.Context, *Asteroid) error
 	Get(context.Context, primitive.ObjectID) (*Asteroid, error)
 	List(context.Context, []primitive.ObjectID) ([]*Asteroid, error)
@@ -78,6 +80,22 @@ func (s *Service) checkIfTargetAsteroidBelongToUser(ctx context.Context, accID p
 		}
 	}
 	return nil
+}
+
+func (s *Service) LinkTo(ctx context.Context, curAstID primitive.ObjectID, linkToIDs []primitive.ObjectID) error {
+	err := s.checkIfTargetAsteroidBelongToUser(ctx, auth.FromContext(ctx).ID, append(linkToIDs, curAstID)...)
+	if err != nil {
+		return err
+	}
+	return errors.WithStack(s.repo.LinkTo(ctx, curAstID, linkToIDs))
+}
+
+func (s *Service) LinkFrom(ctx context.Context, curAstID primitive.ObjectID, linkFromIDs []primitive.ObjectID) error {
+	err := s.checkIfTargetAsteroidBelongToUser(ctx, auth.FromContext(ctx).ID, append(linkFromIDs, curAstID)...)
+	if err != nil {
+		return err
+	}
+	return errors.WithStack(s.repo.LinkFrom(ctx, curAstID, linkFromIDs))
 }
 
 func (s *Service) Sync(ctx context.Context, ast *Asteroid) error {
