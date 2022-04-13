@@ -15,7 +15,7 @@ func RegisterHandlers(r fiber.Router, logger *zap.Logger, validate *validator.Va
 
 	r.Post("/account!login", h.login)
 	r.Post("/account!register", h.register)
-	r.Post("/account!oauth/gitee", h.oAuthGitee)
+	r.Post("/account!oauthGitee", h.oAuthGitee)
 	r.Put("/account/password", h.updatePassword)
 }
 

@@ -40,6 +40,7 @@ func (s *Service) Create(ctx context.Context, col *Collection) error {
 	col.ID = primitive.NewObjectID()
 	col.State = true
 	col.OwnerID = auth.FromContext(ctx).ID
+	col.Items = make([]primitive.ObjectID, 0)
 	col.CreatedTime = time.Now()
 	col.UpdatedTime = time.Now()
 	return errors.WithStack(s.repo.Create(ctx, col))

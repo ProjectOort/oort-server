@@ -14,7 +14,8 @@ import (
 func RegisterHandlers(r fiber.Router, logger *zap.Logger, validate *validator.Validate, graphService *graph.Service) {
 	h := handler{logger, validate, graphService}
 
-	r.Get("/graph", h.getByAsteroidID)
+	r.Get("/graph/asteroid", h.getByAsteroidID)
+	r.Get("/graph/full", h.getFull)
 }
 
 type handler struct {
@@ -27,7 +28,8 @@ func (h *handler) getByAsteroidID(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
-		ID string `json:"id"`
+		ID    string `json:"id"`
+		Depth int    `json:"depth"`
 	}
 	if err := c.QueryParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)
@@ -41,7 +43,17 @@ func (h *handler) getByAsteroidID(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	gph, err := h.graphService.GetByAsteroidID(c.Context(), astID)
+	gph, err := h.graphService.GetByAsteroidID(c.Context(), astID, input.Depth)
+	if err != nil {
+		return err
+	}
+	toJ := MakeGraphPresenter(gph)
+	return c.JSON(toJ)
+}
+
+func (h *handler) getFull(c *fiber.Ctx) error {
+	_ = h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
+	gph, err := h.graphService.GetFull(c.Context())
 	if err != nil {
 		return err
 	}

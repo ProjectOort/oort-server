@@ -4,7 +4,7 @@ import "github.com/ProjectOort/oort-server/biz/search"
 
 type Item struct {
 	Type     int      `json:"type"`
-	TargetID string   `json:"targetID"`
+	TargetID string   `json:"target_id"`
 	Title    string   `json:"title"`
 	Content  []string `json:"content"`
 }

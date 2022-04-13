@@ -2,6 +2,7 @@ package account
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -58,9 +59,13 @@ type TokenMaker interface {
 }
 
 func (x *Account) Token(maker TokenMaker) (string, error) {
-	return maker.MakeToken(map[string]interface{}{
+	token, err := maker.MakeToken(map[string]interface{}{
 		_AccountIDPayloadKey: x.ID.Hex(),
 	})
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("Bearer %s", token), nil
 }
 
 type TokenValidator interface {

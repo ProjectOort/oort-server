@@ -24,7 +24,7 @@ func (h *handler) searchAsteroid(c *fiber.Ctx) error {
 	log := h.logger.Named("[HANDLER]").With(zap.String("request_id", requestid.FromCtx(c))).Sugar()
 
 	var input struct {
-		Text string `json:"q"`
+		Text string `json:"text"`
 	}
 	if err := c.QueryParser(&input); err != nil {
 		return errors.WithStack(gerrors.ErrParamsParsingFailed)

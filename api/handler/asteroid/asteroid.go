@@ -21,8 +21,8 @@ func RegisterHandlers(r fiber.Router, logger *zap.Logger, validate *validator.Va
 	r.Put("/asteroid/content", h.sync)
 	r.Get("/asteroids", h.list)
 	r.Get("/asteroid", h.get)
-	r.Get("/linked/from/asteroid", h.listLinkedFrom)
-	r.Get("/linked/to/asteroid", h.listLinkedTo)
+	r.Get("/linked/from/asteroids", h.listLinkedFrom)
+	r.Get("/linked/to/asteroids", h.listLinkedTo)
 }
 
 type handler struct {

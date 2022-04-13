@@ -17,7 +17,7 @@ func RegisterHandlers(r fiber.Router, logger *zap.Logger, validate *validator.Va
 	r.Post("/collection", h.create)
 	r.Put("/collection", h.update)
 	r.Delete("/collection", h.delete)
-	r.Get("/collections", h.update)
+	r.Get("/collections", h.list)
 	r.Post("/collection/item", h.pushItem)
 	r.Delete("/collection/item", h.popItem)
 	r.Get("/collection/items", h.listItems)
